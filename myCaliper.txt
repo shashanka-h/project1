@@ -1,0 +1,74 @@
+
+
+int i;
+int sign;
+long value;
+float resultInch;
+float resultMili;
+float resultInchConverted;
+float resultMiliConverted;
+const int clockPin = 2;     
+const int dataPin = 4;    
+const int readSwitch=12;
+unsigned long tempmicros;
+
+ 
+
+ void setup() {
+
+  Serial.begin(9600);
+  pinMode(clockPin, INPUT);
+  pinMode(dataPin, INPUT);
+  pinMode(readSwitch, INPUT);
+
+}
+
+
+
+ void loop () {
+
+  while (digitalRead(clockPin)==HIGH) {} //if clock is LOW wait until it turns to HIGH
+  tempmicros=micros();
+  while (digitalRead(clockPin)==LOW) {} //wait for the end of the HIGH pulse
+  if ((micros()-tempmicros)>500) { //if the HIGH pulse was longer than 500 micros we are at the start of a new bit sequence
+  decode(); //decode the bit sequence
+
+  }
+
+}
+
+ 
+
+void decode() {
+if(digitalRead(readSwitch)==HIGH){
+  sign=1;
+  value=0;
+  for (i=0;i<23;i++) {
+
+    while (digitalRead(clockPin)==HIGH) { } //wait until clock returns to HIGH- the first bit is not needed
+    while (digitalRead(clockPin)==LOW) {} //wait until clock returns to LOW
+    if (digitalRead(dataPin)==LOW) {
+      if (i<20) {
+        value|= 1<<i;
+      }
+      if (i==20) {
+
+        sign=-1;
+      }
+    }
+  }
+
+  resultInch=(value*sign)/2000.00;
+  resultMili=(value*sign)/100.00;
+
+  resultInchConverted=resultMili/(25.4);   
+  resultMiliConverted=resultInch*(25.4);
+  
+  Serial.print(resultInch,3); Serial.print(" Inch            ");      Serial.print(resultMiliConverted,3); Serial.print("mm (converted)    ");
+  Serial.print("**|**     ");
+  Serial.print(resultMili,3); Serial.print(" mm            ");      Serial.print(resultInchConverted,3); Serial.println("inch (converted)    "); 
+          
+  delay(1000);  //Do not change this minimum delay is required
+
+}
+}
